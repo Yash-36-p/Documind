@@ -1,7 +1,12 @@
 import os
 from rest_framework import serializers
-from .models import Document, DocumentPage
-from apps.extraction.serializers import DocumentFieldSerializer, FieldCorrectionHistorySerializer
+from .models import Document, DocumentPage, ProcessingLog
+from apps.extraction.serializers import ExtractedFieldSerializer, FieldCorrectionHistorySerializer
+
+class ProcessingLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProcessingLog
+        fields = ['id', 'log_level', 'stage', 'message', 'details', 'created_at']
 
 class DocumentPageSerializer(serializers.ModelSerializer):
     thumbnail_url = serializers.SerializerMethodField()
@@ -22,20 +27,25 @@ class DocumentPageSerializer(serializers.ModelSerializer):
         return None
 
 class DocumentListSerializer(serializers.ModelSerializer):
-    category_display = serializers.CharField(source='get_category_display', read_only=True)
+    document_type_display = serializers.CharField(source='get_document_type_display', read_only=True)
+    category_display = serializers.CharField(source='get_document_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     uploaded_by_name = serializers.SerializerMethodField()
     preview_url = serializers.SerializerMethodField()
-    fields_count = serializers.IntegerField(source='fields.count', read_only=True)
+    fields_count = serializers.IntegerField(source='extracted_fields.count', read_only=True)
+    # Compatibility aliases
+    category = serializers.CharField(source='document_type', read_only=True)
+    created_at = serializers.DateTimeField(source='uploaded_at', read_only=True)
 
     class Meta:
         model = Document
         fields = [
-            'id', 'title', 'filename', 'file_type', 'file_size', 'page_count',
-            'status', 'status_display', 'category', 'category_display',
-            'classification_confidence', 'ocr_confidence', 'is_verified',
-            'uploaded_by_name', 'preview_url', 'fields_count',
-            'created_at', 'updated_at'
+            'id', 'filename', 'title', 'document_type', 'document_type_display',
+            'category', 'category_display', 'status', 'status_display',
+            'confidence', 'ocr_confidence', 'classification_confidence',
+            'uploaded_by', 'uploaded_by_name', 'uploaded_at', 'created_at',
+            'page_count', 'file_size', 'file_type', 'is_verified',
+            'preview_url', 'fields_count', 'updated_at'
         ]
 
     def get_uploaded_by_name(self, obj):
@@ -52,28 +62,35 @@ class DocumentListSerializer(serializers.ModelSerializer):
         return None
 
 class DocumentDetailSerializer(serializers.ModelSerializer):
-    category_display = serializers.CharField(source='get_category_display', read_only=True)
+    document_type_display = serializers.CharField(source='get_document_type_display', read_only=True)
+    category_display = serializers.CharField(source='get_document_type_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     uploaded_by_name = serializers.SerializerMethodField()
     verified_by_name = serializers.SerializerMethodField()
     preview_url = serializers.SerializerMethodField()
     file_url = serializers.SerializerMethodField()
     pages = DocumentPageSerializer(many=True, read_only=True)
-    fields = DocumentFieldSerializer(many=True, read_only=True)
+    extracted_fields = ExtractedFieldSerializer(many=True, read_only=True)
+    fields = ExtractedFieldSerializer(source='extracted_fields', many=True, read_only=True)
+    processing_logs = ProcessingLogSerializer(many=True, read_only=True)
     correction_logs = FieldCorrectionHistorySerializer(many=True, read_only=True)
+    # Compatibility aliases
+    category = serializers.CharField(source='document_type', read_only=True)
+    created_at = serializers.DateTimeField(source='uploaded_at', read_only=True)
 
     class Meta:
         model = Document
         fields = [
-            'id', 'title', 'filename', 'file_type', 'mime_type', 'file_size',
-            'page_count', 'status', 'status_display', 'error_message',
-            'category', 'category_display', 'classification_confidence',
-            'classification_explanation', 'ocr_confidence', 'raw_text',
+            'id', 'filename', 'title', 'document_type', 'document_type_display',
+            'category', 'category_display', 'status', 'status_display',
+            'confidence', 'ocr_confidence', 'classification_confidence',
+            'classification_explanation', 'raw_text', 'file_type',
+            'mime_type', 'file_size', 'page_count', 'error_message',
             'is_verified', 'verified_by_name', 'verified_at',
-            'uploaded_by_name', 'preview_url', 'file_url',
-            'processing_time_ms', 'metadata',
-            'pages', 'fields', 'correction_logs',
-            'created_at', 'updated_at'
+            'uploaded_by', 'uploaded_by_name', 'uploaded_at', 'created_at',
+            'preview_url', 'file_url', 'processing_time_ms', 'metadata',
+            'pages', 'extracted_fields', 'fields', 'processing_logs',
+            'correction_logs', 'updated_at'
         ]
 
     def get_uploaded_by_name(self, obj):
@@ -105,8 +122,8 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
 class DocumentUploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
-        fields = ['id', 'title', 'file']
-        read_only_fields = ['id']
+        fields = ['id', 'filename', 'title', 'file']
+        read_only_fields = ['id', 'filename']
 
     def validate_file(self, value):
         valid_extensions = ['.pdf', '.png', '.jpg', '.jpeg', '.webp', '.tiff', '.bmp']
@@ -115,24 +132,22 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 f"Unsupported file format '{ext}'. Allowed: PDF, PNG, JPG, JPEG."
             )
-        # Limit to 50MB
         if value.size > 50 * 1024 * 1024:
             raise serializers.ValidationError("File size exceeds 50MB limit.")
         return value
 
     def create(self, validated_data):
         file_obj = validated_data['file']
-        ext = os.path.splitext(file_obj.name)[1].lower().replace('.', '')
-        if ext in ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'bmp']:
-            file_type = 'image'
-        else:
-            file_type = 'pdf'
+        filename = file_obj.name
+        ext = os.path.splitext(filename)[1].lower().replace('.', '')
+        file_type = 'image' if ext in ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'bmp'] else 'pdf'
 
         title = validated_data.get('title')
         if not title:
-            title = os.path.splitext(file_obj.name)[0].replace('_', ' ').replace('-', ' ').title()
+            title = os.path.splitext(filename)[0].replace('_', ' ').replace('-', ' ').title()
 
         doc = Document.objects.create(
+            filename=filename,
             title=title,
             file=file_obj,
             file_type=file_type,
@@ -141,8 +156,3 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             uploaded_by=self.context['request'].user if self.context.get('request') and self.context['request'].user.is_authenticated else None
         )
         return doc
-
-class DocumentClassificationUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Document
-        fields = ['category']

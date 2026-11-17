@@ -12,7 +12,6 @@ from .serializers import (
     DocumentListSerializer,
     DocumentDetailSerializer,
     DocumentUploadSerializer,
-    DocumentClassificationUpdateSerializer
 )
 from .services import queue_document_processing
 from apps.users.permissions import IsReviewerOrAdmin, IsViewerOrAboveReadOnly
@@ -30,27 +29,29 @@ class DocumentListCreateView(generics.ListCreateAPIView):
         return DocumentListSerializer
 
     def get_queryset(self):
-        queryset = Document.objects.all()
+        queryset = Document.objects.all().prefetch_related('extracted_fields')
 
         # Query filters
         search = self.request.query_params.get('search')
-        category = self.request.query_params.get('category')
+        doc_type = self.request.query_params.get('document_type') or self.request.query_params.get('category')
         doc_status = self.request.query_params.get('status')
         verified = self.request.query_params.get('verified')
         min_conf = self.request.query_params.get('min_confidence')
 
         if search:
             queryset = queryset.filter(
+                Q(filename__icontains=search) |
                 Q(title__icontains=search) |
                 Q(raw_text__icontains=search) |
-                Q(fields__field_value__icontains=search)
+                Q(extracted_fields__field_name__icontains=search) |
+                Q(extracted_fields__extracted_value__icontains=search)
             ).distinct()
 
-        if category and category != 'all':
-            queryset = queryset.filter(category=category)
+        if doc_type and doc_type != 'all':
+            queryset = queryset.filter(document_type__iexact=doc_type)
 
         if doc_status and doc_status != 'all':
-            queryset = queryset.filter(status=doc_status)
+            queryset = queryset.filter(status__iexact=doc_status)
 
         if verified in ['true', '1']:
             queryset = queryset.filter(is_verified=True)
@@ -59,7 +60,7 @@ class DocumentListCreateView(generics.ListCreateAPIView):
 
         if min_conf:
             try:
-                queryset = queryset.filter(ocr_confidence__gte=float(min_conf))
+                queryset = queryset.filter(confidence__gte=float(min_conf))
             except ValueError:
                 pass
 
@@ -74,19 +75,17 @@ class DocumentListCreateView(generics.ListCreateAPIView):
             request=self.request,
             details={"filename": doc.filename, "size": doc.file_size}
         )
-        # Trigger background or synchronous processing
-        queue_document_processing(str(doc.id))
+        queue_document_processing(doc.id)
 
 
 class DocumentDetailView(generics.RetrieveDestroyAPIView):
-    queryset = Document.objects.all()
+    queryset = Document.objects.all().prefetch_related('extracted_fields', 'pages', 'processing_logs', 'correction_logs')
     serializer_class = DocumentDetailSerializer
     permission_classes = [permissions.IsAuthenticated, IsViewerOrAboveReadOnly]
 
     def perform_destroy(self, instance):
-        title = instance.title
-        doc_id = str(instance.id)
-        # Remove media file from disk
+        title = instance.filename or instance.title
+        doc_id = instance.id
         if instance.file and os.path.exists(instance.file.path):
             try:
                 os.remove(instance.file.path)
@@ -119,7 +118,7 @@ class DocumentReprocessView(APIView):
             details={"reason": "Manual re-process requested"}
         )
 
-        task_id = queue_document_processing(str(doc.id))
+        task_id = queue_document_processing(doc.id)
         return Response({
             "message": "Document re-processing initiated",
             "task_id": str(task_id) if task_id else None,
@@ -171,31 +170,32 @@ class DocumentChangeCategoryView(APIView):
         except Document.DoesNotExist:
             return Response({"error": "Document not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        new_category = request.data.get('category')
-        if not new_category or new_category not in Document.Category.values:
-            return Response({"error": "Invalid category"}, status=status.HTTP_400_BAD_REQUEST)
+        new_doc_type = request.data.get('document_type') or request.data.get('category')
+        
+        # Check against Document.DocumentType values or matching case-insensitively
+        matched_val = None
+        for val in Document.DocumentType.values:
+            if val.lower() == new_doc_type.lower() or val.lower().startswith(new_doc_type.lower()):
+                matched_val = val
+                break
 
-        prev_category = doc.category
-        doc.category = new_category
-        # Manual override gives 100% confidence
+        if not matched_val:
+            return Response({"error": f"Invalid document type '{new_doc_type}'"}, status=status.HTTP_400_BAD_REQUEST)
+
+        prev_type = doc.document_type
+        doc.document_type = matched_val
         doc.classification_confidence = 100.0
-        doc.classification_explanation = {
-            "override": True,
-            "previous": prev_category,
-            "overridden_by": request.user.username
-        }
-        doc.save(update_fields=['category', 'classification_confidence', 'classification_explanation'])
+        doc.save(update_fields=['document_type', 'classification_confidence'])
 
-        # Log correction
         FieldCorrectionHistory.objects.create(
             document=doc,
-            field_key='category',
-            field_label='Document Category',
-            previous_value=prev_category,
-            new_value=new_category,
+            field_name='Document Type',
+            field_key='document_type',
+            previous_value=prev_type,
+            new_value=matched_val,
             corrected_by=request.user,
             correction_type='classification_override',
-            notes=request.data.get('notes', 'Manual category override by user')
+            notes=request.data.get('notes', 'Manual type override')
         )
 
         log_activity(
@@ -203,13 +203,14 @@ class DocumentChangeCategoryView(APIView):
             user=request.user,
             document=doc,
             request=request,
-            details={"previous": prev_category, "new": new_category}
+            details={"previous": prev_type, "new": matched_val}
         )
 
         return Response({
-            "message": "Category updated successfully",
-            "category": doc.category,
-            "category_display": doc.get_category_display()
+            "message": "Document type updated successfully",
+            "document_type": doc.document_type,
+            "category": doc.document_type,
+            "category_display": doc.get_document_type_display()
         })
 
 

@@ -3,10 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 
-from .models import DocumentField, FieldCorrectionHistory
+from .models import ExtractedField, FieldCorrectionHistory
 from .serializers import (
-    DocumentFieldSerializer,
-    DocumentFieldCreateUpdateSerializer,
+    ExtractedFieldSerializer,
+    ExtractedFieldCreateUpdateSerializer,
     FieldCorrectionHistorySerializer
 )
 from apps.documents.models import Document
@@ -19,8 +19,8 @@ class DocumentFieldsView(APIView):
 
     def get(self, request, doc_id):
         doc = get_object_or_404(Document, id=doc_id)
-        fields = doc.fields.all()
-        serializer = DocumentFieldSerializer(fields, many=True)
+        fields = doc.extracted_fields.all()
+        serializer = ExtractedFieldSerializer(fields, many=True)
         return Response(serializer.data)
 
     def post(self, request, doc_id):
@@ -30,22 +30,27 @@ class DocumentFieldsView(APIView):
 
         data = request.data.copy()
         data['document'] = doc.id
-        serializer = DocumentFieldCreateUpdateSerializer(data=data)
+        # Map label / value
+        if 'field_label' in data and 'field_name' not in data:
+            data['field_name'] = data['field_label']
+        if 'field_value' in data and 'extracted_value' not in data:
+            data['extracted_value'] = data['field_value']
+
+        serializer = ExtractedFieldCreateUpdateSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         field = serializer.save(
-            is_corrected=True, # user manually added it
-            original_value=data.get('field_value', ''),
+            is_corrected=True,
+            original_value=data.get('extracted_value', ''),
             confidence=100.0
         )
 
-        # Log creation
         FieldCorrectionHistory.objects.create(
             document=doc,
-            document_field=field,
+            extracted_field=field,
+            field_name=field.field_name,
             field_key=field.field_key,
-            field_label=field.field_label,
             previous_value='',
-            new_value=field.field_value,
+            new_value=field.extracted_value,
             corrected_by=request.user,
             correction_type='field_added',
             notes='Manually added field'
@@ -56,36 +61,39 @@ class DocumentFieldsView(APIView):
             user=request.user,
             document=doc,
             request=request,
-            details={"field_key": field.field_key, "value": field.field_value}
+            details={"field_name": field.field_name, "value": field.extracted_value}
         )
 
-        return Response(DocumentFieldSerializer(field).data, status=status.HTTP_201_CREATED)
+        return Response(ExtractedFieldSerializer(field).data, status=status.HTTP_201_CREATED)
 
 
 class DocumentFieldDetailView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsReviewerOrAdmin]
 
     def patch(self, request, pk):
-        field = get_object_or_404(DocumentField, pk=pk)
-        old_value = field.field_value
-        new_value = request.data.get('field_value', old_value)
+        field = get_object_or_404(ExtractedField, pk=pk)
+        old_value = field.extracted_value
+        new_value = request.data.get('extracted_value', request.data.get('field_value', old_value))
         notes = request.data.get('notes', '')
 
-        serializer = DocumentFieldCreateUpdateSerializer(field, data=request.data, partial=True)
+        data = request.data.copy()
+        if 'field_value' in data:
+            data['extracted_value'] = data['field_value']
+
+        serializer = ExtractedFieldCreateUpdateSerializer(field, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        if old_value != new_value:
+        if str(old_value) != str(new_value):
             field.is_corrected = True
-            # Manual edit sets confidence to 100%
-            field.confidence = 100.0
+            field.confidence = 100.0 # user verification guarantees correctness
+            field.extracted_value = new_value
             field.save()
 
-            # Record correction log
             FieldCorrectionHistory.objects.create(
                 document=field.document,
-                document_field=field,
+                extracted_field=field,
+                field_name=field.field_name,
                 field_key=field.field_key,
-                field_label=field.field_label,
                 previous_value=old_value,
                 new_value=new_value,
                 corrected_by=request.user,
@@ -99,7 +107,7 @@ class DocumentFieldDetailView(APIView):
                 document=field.document,
                 request=request,
                 details={
-                    "field_key": field.field_key,
+                    "field_name": field.field_name,
                     "old_value": old_value,
                     "new_value": new_value
                 }
@@ -107,19 +115,19 @@ class DocumentFieldDetailView(APIView):
         else:
             serializer.save()
 
-        return Response(DocumentFieldSerializer(field).data)
+        return Response(ExtractedFieldSerializer(field).data)
 
     def delete(self, request, pk):
-        field = get_object_or_404(DocumentField, pk=pk)
+        field = get_object_or_404(ExtractedField, pk=pk)
         doc = field.document
-        field_key = field.field_key
-        field_val = field.field_value
+        name = field.field_name
+        val = field.extracted_value
 
         FieldCorrectionHistory.objects.create(
             document=doc,
-            field_key=field_key,
-            field_label=field.field_label,
-            previous_value=field_val,
+            field_name=name,
+            field_key=field.field_key,
+            previous_value=val,
             new_value='[DELETED]',
             corrected_by=request.user,
             correction_type='field_deleted'
@@ -130,7 +138,7 @@ class DocumentFieldDetailView(APIView):
             user=request.user,
             document=doc,
             request=request,
-            details={"field_key": field_key, "deleted_value": field_val}
+            details={"field_name": name, "deleted_value": val}
         )
 
         field.delete()

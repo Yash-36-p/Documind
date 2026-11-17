@@ -40,16 +40,16 @@ urlpatterns = [
 
     # 2. Document Management
     path('api/documents/', DocumentListCreateView.as_view(), name='document_list_create'),
-    path('api/documents/<uuid:pk>/', DocumentDetailView.as_view(), name='document_detail'),
-    path('api/documents/<uuid:pk>/reprocess/', DocumentReprocessView.as_view(), name='document_reprocess'),
-    path('api/documents/<uuid:pk>/verify/', DocumentVerifyView.as_view(), name='document_verify'),
-    path('api/documents/<uuid:pk>/category/', DocumentChangeCategoryView.as_view(), name='document_change_category'),
-    path('api/documents/<uuid:pk>/download/', DocumentDownloadView.as_view(), name='document_download'),
+    path('api/documents/<int:pk>/', DocumentDetailView.as_view(), name='document_detail'),
+    path('api/documents/<int:pk>/reprocess/', DocumentReprocessView.as_view(), name='document_reprocess'),
+    path('api/documents/<int:pk>/verify/', DocumentVerifyView.as_view(), name='document_verify'),
+    path('api/documents/<int:pk>/category/', DocumentChangeCategoryView.as_view(), name='document_change_category'),
+    path('api/documents/<int:pk>/download/', DocumentDownloadView.as_view(), name='document_download'),
 
     # 4 & 6. Field Extraction & Review / Correction
-    path('api/documents/<uuid:doc_id>/fields/', DocumentFieldsView.as_view(), name='document_fields'),
-    path('api/documents/<uuid:doc_id>/corrections/', DocumentCorrectionHistoryView.as_view(), name='document_corrections'),
-    path('api/fields/<uuid:pk>/', DocumentFieldDetailView.as_view(), name='field_detail'),
+    path('api/documents/<int:doc_id>/fields/', DocumentFieldsView.as_view(), name='document_fields'),
+    path('api/documents/<int:doc_id>/corrections/', DocumentCorrectionHistoryView.as_view(), name='document_corrections'),
+    path('api/fields/<int:pk>/', DocumentFieldDetailView.as_view(), name='field_detail'),
 
     # 7. Search, Analytics, CSV Export & Audit Logs
     path('api/analytics/dashboard/', DashboardStatsView.as_view(), name='dashboard_stats'),

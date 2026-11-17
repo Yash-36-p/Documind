@@ -20,3 +20,4 @@ def queue_document_processing(document_id: str, async_mode: bool = True):
     except Exception as e:
         logger.warning(f"Could not dispatch to Celery broker ({e}). Falling back to in-process execution.")
         return run_document_processing(document_id)
+

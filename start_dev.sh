@@ -33,3 +33,4 @@ trap 'kill $(jobs -p) 2>/dev/null' EXIT
 
 # Start frontend dev server
 (cd frontend && npx vite --port 3000 --host)
+

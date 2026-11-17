@@ -279,3 +279,4 @@ export default function UploadModal({ isOpen, onClose, onUploaded }) {
     </div>
   );
 }
+

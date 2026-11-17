@@ -21,3 +21,4 @@ class AuditLogListView(generics.ListAPIView):
             queryset = queryset.filter(user_id=user_id)
 
         return queryset[:200]
+

@@ -1,4 +1,3 @@
-import uuid
 from django.db import models
 from django.conf import settings
 from apps.documents.models import Document
@@ -19,7 +18,7 @@ class AuditLog(models.Model):
         LOGIN = 'LOGIN', 'User Logged In'
         REGISTER = 'REGISTER', 'User Registered'
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -47,4 +46,3 @@ class AuditLog(models.Model):
 
     def __str__(self):
         return f"[{self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}] {self.user_name or 'System'} - {self.get_action_display()}"
-
