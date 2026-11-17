@@ -10,6 +10,20 @@ const api = axios.create({
 // Request interceptor to add JWT authorization token
 api.interceptors.request.use(
   (config) => {
+    // Never send old Authorization header to public auth endpoints
+    const isPublicAuthEndpoint =
+      config.url?.includes('/auth/login') ||
+      config.url?.includes('/auth/register') ||
+      config.url?.includes('/auth/google') ||
+      config.url?.includes('/auth/token/refresh');
+
+    if (isPublicAuthEndpoint) {
+      if (config.headers) {
+        delete config.headers.Authorization;
+      }
+      return config;
+    }
+
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -41,7 +55,9 @@ api.interceptors.response.use(
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('documind_user');
-          window.location.href = '/login';
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            window.location.href = '/login';
+          }
         }
       } else {
         localStorage.removeItem('access_token');
@@ -57,4 +73,3 @@ api.interceptors.response.use(
 );
 
 export default api;
-

@@ -23,6 +23,7 @@ User = get_user_model()
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    authentication_classes = []
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -40,6 +41,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []
     serializer_class = RegisterSerializer
 
     def create(self, request, *args, **kwargs):
@@ -67,6 +69,7 @@ class GoogleAuthView(APIView):
     the user identity, and issues SimpleJWT access & refresh tokens.
     """
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         credential = request.data.get('credential')

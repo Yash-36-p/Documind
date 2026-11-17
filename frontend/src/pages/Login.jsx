@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -40,10 +40,16 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [googleModalOpen, setGoogleModalOpen] = useState(false);
   const [customGoogleEmail, setCustomGoogleEmail] = useState('');
-  const [customGoogleName, setCustomGoogleName] = useState('');
 
   const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
+
+  // Clear stale tokens when arriving on login page
+  useEffect(() => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('documind_user');
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,6 +63,7 @@ export default function Login() {
       console.error('Login error:', err);
       setError(
         err.response?.data?.detail ||
+        err.response?.data?.error ||
         err.response?.data?.non_field_errors?.[0] ||
         'Invalid username or password.'
       );
@@ -69,7 +76,7 @@ export default function Login() {
     setError('');
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-    // If official Google Identity Services client is loaded in window
+    // If official Google Identity Services client is configured
     if (window.google?.accounts?.id && googleClientId) {
       window.google.accounts.id.initialize({
         client_id: googleClientId,
@@ -79,7 +86,8 @@ export default function Login() {
             await loginWithGoogle({ credential: response.credential });
             navigate('/');
           } catch (err) {
-            setError('Google sign-in verification failed.');
+            const msg = err.response?.data?.error || 'Google sign-in verification failed.';
+            setError(msg);
           } finally {
             setLoading(false);
           }
@@ -87,7 +95,7 @@ export default function Login() {
       });
       window.google.accounts.id.prompt();
     } else {
-      // Open the seamless Google Authentication dialog
+      // Open the Google Authentication dialog
       setGoogleModalOpen(true);
     }
   };
@@ -98,14 +106,19 @@ export default function Login() {
     setError('');
     try {
       await loginWithGoogle({
-        email: email || 'alex.document.reviewer@gmail.com',
+        email: email || 'alex.reviewer.google@gmail.com',
         name: name || 'Alex Rivera (Google)',
         avatar_url: 'https://lh3.googleusercontent.com/a/default-user',
       });
       navigate('/');
     } catch (err) {
       console.error('Google Auth Failed:', err);
-      setError('Google sign in failed. Please try again.');
+      const detail =
+        err.response?.data?.error ||
+        err.response?.data?.detail ||
+        err.message ||
+        'Google sign in failed. Please try again.';
+      setError(detail);
     } finally {
       setLoading(false);
     }
@@ -141,7 +154,7 @@ export default function Login() {
             </div>
           )}
 
-          {/* 1. Prominent Google Sign-in Button */}
+          {/* 1. Google Sign-in Button */}
           <div>
             <button
               type="button"
@@ -282,7 +295,7 @@ export default function Login() {
             </div>
 
             <p className="text-xs text-slate-500">
-              Choose a Google workspace account to sign in or connect with DocuMind:
+              Select a Google account to sign in to DocuMind:
             </p>
 
             {/* Google Profile Cards */}
@@ -319,12 +332,12 @@ export default function Login() {
             {/* Custom Google Email input */}
             <div className="pt-2 border-t border-slate-100 space-y-2">
               <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Or enter your Google email:
+                Or enter any Google account:
               </div>
               <div className="space-y-2">
                 <input
                   type="email"
-                  placeholder="yourname@gmail.com"
+                  placeholder="your.email@gmail.com"
                   value={customGoogleEmail}
                   onChange={(e) => setCustomGoogleEmail(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none"
