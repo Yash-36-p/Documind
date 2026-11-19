@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import api from '../api/client';
+import api, { API_BASE_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import {
   FileText,
@@ -111,7 +111,7 @@ export default function Documents() {
     if (category !== 'all') params.append('category', category);
     if (statusFilter !== 'all') params.append('status', statusFilter);
     if (verifiedFilter !== 'all') params.append('verified', verifiedFilter);
-    window.open(`/api/export/csv/?${params.toString()}`, '_blank');
+    window.open(`${API_BASE_URL}/export/csv/?${params.toString()}`, '_blank');
   };
 
   const formatSize = (bytes) => {
@@ -375,7 +375,7 @@ export default function Documents() {
                         )}
 
                         <a
-                          href={`/api/documents/${doc.id}/download/`}
+                          href={`${API_BASE_URL}/documents/${doc.id}/download/`}
                           target="_blank"
                           rel="noreferrer"
                           className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"

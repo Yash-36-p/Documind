@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import api from '../api/client';
+import api, { API_BASE_URL } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import {
   FileText,

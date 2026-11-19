@@ -1,10 +1,21 @@
 import axios from 'axios';
 
+export const getBackendOrigin = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname || '127.0.0.1';
+    return `http://${hostname}:8000`;
+  }
+  return 'http://127.0.0.1:8000';
+};
+
+export const API_BASE_URL = `${getBackendOrigin()}/api`;
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 15000,
 });
 
 // Request interceptor to add JWT authorization token
@@ -43,7 +54,7 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refresh_token');
       if (refreshToken) {
         try {
-          const res = await axios.post('/api/auth/token/refresh/', {
+          const res = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
             refresh: refreshToken,
           });
           if (res.status === 200) {

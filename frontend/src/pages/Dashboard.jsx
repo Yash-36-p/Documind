@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import api from '../api/client';
+import api, { API_BASE_URL } from '../api/client';
 import {
   FileText,
   CheckCircle2,
@@ -42,7 +42,7 @@ export default function Dashboard() {
   }, []);
 
   const handleExportCsv = () => {
-    window.open('/api/export/csv/', '_blank');
+    window.open(`${API_BASE_URL}/export/csv/`, '_blank');
   };
 
   const getConfidenceBadge = (confidence) => {
