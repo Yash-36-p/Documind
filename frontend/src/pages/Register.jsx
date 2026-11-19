@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import InteractiveLiveWallpaper from '../components/InteractiveLiveWallpaper';
+import TiltCard from '../components/TiltCard';
 import {
   FileText,
   Lock,
@@ -9,7 +11,8 @@ import {
   Building,
   AlertCircle,
   ArrowRight,
-  X
+  X,
+  Sparkles
 } from 'lucide-react';
 
 const GoogleIcon = () => (
@@ -49,11 +52,14 @@ export default function Register() {
   const [googleModalOpen, setGoogleModalOpen] = useState(false);
   const [customGoogleEmail, setCustomGoogleEmail] = useState('');
 
-  const { register, login, loginWithGoogle } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -61,23 +67,27 @@ export default function Register() {
     setError('');
 
     if (formData.password !== formData.password_confirm) {
-      setError("Passwords don't match.");
+      setError('Passwords do not match.');
       return;
     }
 
     setLoading(true);
     try {
       await register(formData);
-      await login(formData.username, formData.password);
       navigate('/');
     } catch (err) {
-      console.error('Registration failed:', err);
-      const errData = err.response?.data;
-      if (errData) {
-        const firstErr = Object.values(errData)[0];
-        setError(Array.isArray(firstErr) ? firstErr[0] : String(firstErr));
+      console.error('Registration error:', err);
+      const res = err.response?.data;
+      if (res) {
+        const firstErr =
+          res.username?.[0] ||
+          res.email?.[0] ||
+          res.password?.[0] ||
+          res.detail ||
+          'Failed to create account.';
+        setError(firstErr);
       } else {
-        setError('Registration failed. Please verify your details.');
+        setError('Registration failed. Please check your credentials.');
       }
     } finally {
       setLoading(false);
@@ -87,7 +97,6 @@ export default function Register() {
   const executeGoogleAuth = async (email, name) => {
     setLoading(true);
     setGoogleModalOpen(false);
-    setError('');
     try {
       await loginWithGoogle({
         email: email || 'new.user.google@gmail.com',
@@ -96,191 +105,195 @@ export default function Register() {
       });
       navigate('/');
     } catch (err) {
-      console.error('Google Auth Failed:', err);
-      setError('Google sign up failed. Please try again.');
+      setError(err.response?.data?.error || err.message || 'Google signup failed.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 items-center justify-center p-4">
-      <div className="w-full max-w-lg space-y-6">
+    <div className="relative flex min-h-screen items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
+      {/* 3D Interactive Live Wallpaper */}
+      <InteractiveLiveWallpaper />
+
+      <div className="relative z-10 w-full max-w-lg space-y-6">
         <div className="text-center space-y-2">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-lg shadow-indigo-500/25">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-xl shadow-indigo-500/30">
             <FileText className="h-7 w-7 text-white" />
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            Create your account
+          <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
+            Create your Docu<span className="text-indigo-600">Mind</span> Account
           </h2>
           <p className="text-xs text-slate-500">
-            Join the DocuMind Intelligent Document Processing workspace
+            Start processing documents with automated OCR and intelligent field extraction
           </p>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/50 space-y-6">
-          {error && (
-            <div className="flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs text-rose-700">
-              <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* Google Sign In option */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setGoogleModalOpen(true)}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] disabled:opacity-50"
-            >
-              <GoogleIcon />
-              <span>Sign up with Google</span>
-            </button>
-          </div>
-
-          <div className="relative flex items-center justify-center">
-            <div className="w-full border-t border-slate-200" />
-            <span className="absolute bg-white px-3 text-xs font-medium text-slate-400">
-              or register with credentials
-            </span>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  First Name
-                </label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-                  placeholder="Jane"
-                />
+        <TiltCard maxTilt={5} scale={1.01} className="rounded-3xl">
+          <div className="rounded-3xl border border-white/60 bg-white/90 p-8 shadow-2xl shadow-indigo-500/10 backdrop-blur-2xl space-y-6">
+            {error && (
+              <div className="flex items-center gap-2 rounded-2xl bg-rose-50 border border-rose-200/60 p-3 text-xs text-rose-700">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+                <span>{error}</span>
               </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Last Name
-                </label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-                  placeholder="Doe"
-                />
-              </div>
-            </div>
+            )}
 
+            {/* Google Sign In option */}
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Username *
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-                placeholder="janedoe"
-              />
+              <button
+                type="button"
+                onClick={() => setGoogleModalOpen(true)}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] disabled:opacity-50"
+              >
+                <GoogleIcon />
+                <span>Sign up with Google</span>
+              </button>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                Email Address
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-                placeholder="jane@company.com"
-              />
+            <div className="relative flex items-center justify-center">
+              <div className="w-full border-t border-slate-200" />
+              <span className="absolute bg-white/90 px-3 text-xs font-semibold text-slate-400 backdrop-blur-sm">
+                or register with credentials
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Role
-                </label>
-                <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-                >
-                  <option value="reviewer">Reviewer / Editor</option>
-                  <option value="viewer">Viewer</option>
-                  <option value="admin">Administrator</option>
-                </select>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                    placeholder="Jane"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                    placeholder="Doe"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Organization
+                  Username *
                 </label>
                 <input
                   type="text"
-                  name="organization"
-                  value={formData.organization}
-                  onChange={handleChange}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-                  placeholder="Acme Inc."
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Password *
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
+                  name="username"
+                  value={formData.username}
                   onChange={handleChange}
                   required
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                  placeholder="janedoe"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
-                  Confirm Password *
+                  Email Address
                 </label>
                 <input
-                  type="password"
-                  name="password_confirm"
-                  value={formData.password_confirm}
+                  type="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
-                  required
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
-                  placeholder="••••••••"
+                  className="w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                  placeholder="jane@company.com"
                 />
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-700 active:scale-[0.99] transition disabled:opacity-50"
-            >
-              <span>{loading ? 'Creating Account...' : 'Register Account'}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
-        </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Role
+                  </label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                  >
+                    <option value="reviewer">Reviewer / Editor</option>
+                    <option value="viewer">Viewer</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </div>
 
-        <p className="text-center text-xs text-slate-500">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Organization
+                  </label>
+                  <input
+                    type="text"
+                    name="organization"
+                    value={formData.organization}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                    placeholder="Acme Inc."
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Confirm Password *
+                  </label>
+                  <input
+                    type="password"
+                    name="password_confirm"
+                    value={formData.password_confirm}
+                    onChange={handleChange}
+                    required
+                    className="w-full rounded-xl border border-slate-200 bg-white/80 px-3.5 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative w-full flex items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/30 transition-all duration-300 hover:scale-[1.01] hover:shadow-indigo-600/40 active:scale-[0.99] disabled:opacity-50"
+              >
+                <span>{loading ? 'Creating Account...' : 'Register Account'}</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+            </form>
+          </div>
+        </TiltCard>
+
+        <p className="text-center text-xs font-medium text-slate-600">
           Already have an account?{' '}
           <Link to="/login" className="font-bold text-indigo-600 hover:underline">
             Sign in

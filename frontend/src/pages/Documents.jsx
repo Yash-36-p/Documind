@@ -156,7 +156,7 @@ export default function Documents() {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-4">
+      <div className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-xl shadow-indigo-500/5 backdrop-blur-xl space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           {/* Search Input */}
           <div className="relative flex-1">
@@ -220,7 +220,7 @@ export default function Documents() {
       </div>
 
       {/* Document Grid / Table */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-indigo-500/5 backdrop-blur-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wider text-slate-400">

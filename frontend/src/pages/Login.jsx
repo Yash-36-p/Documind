@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import InteractiveLiveWallpaper from '../components/InteractiveLiveWallpaper';
+import TiltCard from '../components/TiltCard';
 import {
   FileText,
   Lock,
@@ -10,7 +12,9 @@ import {
   Shield,
   CheckCircle2,
   X,
-  Loader2
+  Loader2,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 
 const GoogleIcon = () => (
@@ -132,175 +136,194 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-50 items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        {/* Logo & Headline */}
-        <div className="text-center space-y-2">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-lg shadow-indigo-500/25">
-            <FileText className="h-7 w-7 text-white" />
-          </div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">
-            Sign in to Docu<span className="text-indigo-600">Mind</span>
-          </h2>
-          <p className="text-xs text-slate-500">
-            Intelligent Document Processing & OCR Extraction Platform
-          </p>
-        </div>
+    <div className="relative flex min-h-screen items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
+      {/* 3D Interactive Live Wallpaper */}
+      <InteractiveLiveWallpaper />
 
-        {/* Card */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/50 space-y-6">
-          {error && (
-            <div className="flex items-center gap-2 rounded-xl bg-rose-50 p-3 text-xs text-rose-700">
-              <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* 1. Google Sign-in Button */}
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={handleGoogleSignInClick}
-              disabled={loading || googleLoading}
-              className="w-full flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-3 px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] disabled:opacity-50"
-            >
-              {googleLoading ? (
-                <>
-                  <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
-                  <span>Connecting with Google...</span>
-                </>
-              ) : (
-                <>
-                  <GoogleIcon />
-                  <span>Sign in with Google</span>
-                </>
-              )}
-            </button>
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => setGoogleModalOpen(true)}
-                className="text-[11px] font-medium text-slate-400 hover:text-indigo-600 hover:underline"
-              >
-                Choose another Google email / account
-              </button>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="relative flex items-center justify-center">
-            <div className="w-full border-t border-slate-200" />
-            <span className="absolute bg-white px-3 text-xs font-medium text-slate-400">
-              or sign in with username
+      <div className="relative z-10 w-full max-w-md space-y-6">
+        {/* Holographic Logo & Headline */}
+        <div className="text-center space-y-3">
+          <div className="group relative mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 shadow-xl shadow-indigo-500/30 transition-all duration-500 hover:scale-110 hover:rotate-3">
+            <div className="animate-shine absolute inset-0 w-1/2 bg-white/25 rounded-2xl" />
+            <FileText className="h-8 w-8 text-white transition-transform group-hover:scale-105" />
+            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-80"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-cyan-500 border-2 border-white"></span>
             </span>
           </div>
 
-          {/* Standard Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                Username
-              </label>
-              <div className="relative">
-                <UserIcon className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  placeholder="admin"
-                  className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
-              </div>
+          <div>
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200/80 bg-white/70 px-3 py-1 text-xs font-semibold text-indigo-700 shadow-sm backdrop-blur-md mb-2">
+              <Sparkles className="h-3 w-3 animate-spin" style={{ animationDuration: '4s' }} />
+              <span>Next-Gen 3D Document Intelligence</span>
             </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="••••••••"
-                  className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || googleLoading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-700 active:scale-[0.99] transition disabled:opacity-50"
-            >
-              <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </form>
-
-          {/* Quick Demo Accounts Selection */}
-          <div className="pt-2 border-t border-slate-100 space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              Quick Demo Accounts:
-            </span>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin', 'admin123')}
-                className={`rounded-xl border p-2 text-center text-xs transition ${
-                  username === 'admin'
-                    ? 'border-indigo-600 bg-indigo-50/50 text-indigo-700 font-bold'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                }`}
-              >
-                <div className="font-bold">Admin</div>
-                <div className="text-[10px] text-slate-400">admin123</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('reviewer', 'reviewer123')}
-                className={`rounded-xl border p-2 text-center text-xs transition ${
-                  username === 'reviewer'
-                    ? 'border-indigo-600 bg-indigo-50/50 text-indigo-700 font-bold'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                }`}
-              >
-                <div className="font-bold">Reviewer</div>
-                <div className="text-[10px] text-slate-400">reviewer123</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('viewer', 'viewer123')}
-                className={`rounded-xl border p-2 text-center text-xs transition ${
-                  username === 'viewer'
-                    ? 'border-indigo-600 bg-indigo-50/50 text-indigo-700 font-bold'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-700'
-                }`}
-              >
-                <div className="font-bold">Viewer</div>
-                <div className="text-[10px] text-slate-400">viewer123</div>
-              </button>
-            </div>
+            <h2 className="text-3xl font-black tracking-tight text-slate-900">
+              Docu<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-cyan-600">Mind</span>
+            </h2>
+            <p className="text-xs text-slate-600 mt-1">
+              Interactive OCR • Neural Field Extraction • 3D Document Inspection
+            </p>
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-500">
+        {/* 3D Physics Tilt Card */}
+        <TiltCard maxTilt={6} scale={1.01} className="rounded-3xl">
+          <div className="rounded-3xl border border-white/60 bg-white/85 p-8 shadow-2xl shadow-indigo-500/10 backdrop-blur-2xl space-y-6">
+            {error && (
+              <div className="flex items-center gap-2 rounded-2xl bg-rose-50/90 border border-rose-200/60 p-3 text-xs text-rose-700 animate-in fade-in">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* 1. Google Sign-in Button */}
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleGoogleSignInClick}
+                disabled={loading || googleLoading}
+                className="group relative w-full flex items-center justify-center gap-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white py-3 px-4 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:border-indigo-300 hover:shadow-md hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50"
+              >
+                <div className="animate-shine pointer-events-none absolute inset-0 w-1/2 bg-white/40" />
+                {googleLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+                    <span>Connecting with Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    <span>Sign in with Google</span>
+                  </>
+                )}
+              </button>
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setGoogleModalOpen(true)}
+                  className="text-[11px] font-semibold text-indigo-600/80 hover:text-indigo-700 hover:underline"
+                >
+                  Switch or enter custom Google account
+                </button>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="relative flex items-center justify-center">
+              <div className="w-full border-t border-slate-200/80" />
+              <span className="absolute bg-white/90 px-3 text-xs font-semibold text-slate-400 backdrop-blur-sm">
+                or continue with credentials
+              </span>
+            </div>
+
+            {/* Standard Login Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Username
+                </label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    placeholder="admin"
+                    className="w-full rounded-2xl border border-slate-200/80 bg-white/80 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className="w-full rounded-2xl border border-slate-200/80 bg-white/80 py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 backdrop-blur-sm transition-all focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-indigo-100"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || googleLoading}
+                className="group relative w-full flex items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/30 transition-all duration-300 hover:scale-[1.01] hover:shadow-indigo-600/40 active:scale-[0.99] disabled:opacity-50"
+              >
+                <div className="animate-shine pointer-events-none absolute inset-0 w-1/2 bg-white/20" />
+                <span>{loading ? 'Verifying Neural Session...' : 'Sign In'}</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </button>
+            </form>
+
+            {/* Quick Demo Accounts Selection */}
+            <div className="pt-2 border-t border-slate-100 space-y-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Quick Demo 1-Click Access:
+              </span>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin('admin', 'admin123')}
+                  className={`rounded-2xl border p-2 text-center text-xs transition-all ${
+                    username === 'admin'
+                      ? 'border-indigo-500 bg-indigo-50/80 text-indigo-700 font-bold shadow-sm'
+                      : 'border-slate-200/80 bg-white/60 hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <div className="font-bold">Admin</div>
+                  <div className="text-[10px] text-slate-400">admin123</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin('reviewer', 'reviewer123')}
+                  className={`rounded-2xl border p-2 text-center text-xs transition-all ${
+                    username === 'reviewer'
+                      ? 'border-indigo-500 bg-indigo-50/80 text-indigo-700 font-bold shadow-sm'
+                      : 'border-slate-200/80 bg-white/60 hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <div className="font-bold">Reviewer</div>
+                  <div className="text-[10px] text-slate-400">reviewer123</div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleQuickLogin('viewer', 'viewer123')}
+                  className={`rounded-2xl border p-2 text-center text-xs transition-all ${
+                    username === 'viewer'
+                      ? 'border-indigo-500 bg-indigo-50/80 text-indigo-700 font-bold shadow-sm'
+                      : 'border-slate-200/80 bg-white/60 hover:bg-slate-50 text-slate-700'
+                  }`}
+                >
+                  <div className="font-bold">Viewer</div>
+                  <div className="text-[10px] text-slate-400">viewer123</div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </TiltCard>
+
+        <p className="text-center text-xs font-medium text-slate-600">
           Need an account?{' '}
-          <Link to="/register" className="font-bold text-indigo-600 hover:underline">
+          <Link to="/register" className="font-bold text-indigo-600 hover:text-indigo-700 hover:underline">
             Register here
           </Link>
         </p>
       </div>
 
-      {/* Google Account Modal */}
+      {/* Google Account Switcher Modal */}
       {googleModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl space-y-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-md animate-in fade-in">
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl space-y-5 border border-slate-100">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <GoogleIcon />
@@ -308,14 +331,14 @@ export default function Login() {
               </div>
               <button
                 onClick={() => setGoogleModalOpen(false)}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100"
+                className="rounded-xl p-1 text-slate-400 hover:bg-slate-100"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
             <p className="text-xs text-slate-500">
-              Select a Google account to sign in to DocuMind:
+              Select an account to authorize your 3D DocuMind session:
             </p>
 
             {/* Google Profile Cards */}
@@ -323,7 +346,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => executeGoogleAuth('alex.reviewer.google@gmail.com', 'Alex Rivera')}
-                className="w-full flex items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left hover:bg-indigo-50/40 hover:border-indigo-300 transition"
+                className="w-full flex items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left hover:bg-indigo-50/60 hover:border-indigo-300 transition"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-bold text-white text-sm">
                   A
@@ -337,7 +360,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => executeGoogleAuth('sarah.admin.google@gmail.com', 'Sarah Connor')}
-                className="w-full flex items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left hover:bg-indigo-50/40 hover:border-indigo-300 transition"
+                className="w-full flex items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left hover:bg-indigo-50/60 hover:border-indigo-300 transition"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-600 font-bold text-white text-sm">
                   S
@@ -360,13 +383,13 @@ export default function Login() {
                   placeholder="your.email@gmail.com"
                   value={customGoogleEmail}
                   onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none"
+                  className="w-full rounded-2xl border border-slate-200 px-3 py-2 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none"
                 />
                 <button
                   type="button"
                   disabled={!customGoogleEmail}
                   onClick={() => executeGoogleAuth(customGoogleEmail, customGoogleEmail.split('@')[0])}
-                  className="w-full rounded-xl bg-slate-900 py-2 text-xs font-bold text-white hover:bg-slate-800 transition disabled:opacity-40"
+                  className="w-full rounded-2xl bg-slate-900 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition disabled:opacity-40"
                 >
                   Continue with this Email
                 </button>

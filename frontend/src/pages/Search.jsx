@@ -67,8 +67,8 @@ export default function Search() {
 
       {/* Main Search Input Form */}
       <form onSubmit={handleSearchSubmit} className="relative">
-        <div className="flex items-center rounded-2xl border-2 border-indigo-500/20 bg-white p-2 shadow-lg shadow-indigo-500/5 focus-within:border-indigo-600 transition">
-          <SearchIcon className="h-6 w-6 text-slate-400 ml-3 shrink-0" />
+        <div className="flex items-center rounded-3xl border border-white/80 bg-white/90 p-2 shadow-2xl shadow-indigo-500/10 backdrop-blur-xl focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-100 transition-all">
+          <SearchIcon className="h-6 w-6 text-indigo-500 ml-3 shrink-0" />
           <input
             type="text"
             placeholder="Search keywords, customer names, dates, amounts, invoice #, terms..."
@@ -80,7 +80,7 @@ export default function Search() {
           <button
             type="submit"
             disabled={loading}
-            className="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-indigo-700 transition"
+            className="rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-500/25 hover:shadow-lg hover:scale-105 active:scale-95 transition-all"
           >
             {loading ? 'Searching...' : 'Search'}
           </button>
@@ -103,7 +103,7 @@ export default function Search() {
           results.map((res) => (
             <div
               key={res.id}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:border-indigo-200 hover:shadow-md transition space-y-3"
+              className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-indigo-500/5 backdrop-blur-xl hover:border-indigo-300 hover:shadow-2xl hover:scale-[1.01] transition-all duration-300 space-y-3"
             >
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <Link

@@ -94,7 +94,7 @@ export default function AuditLogs() {
       </div>
 
       {/* Filter toolbar */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex items-center justify-between">
+      <div className="rounded-3xl border border-white/60 bg-white/85 p-4 shadow-xl shadow-indigo-500/5 backdrop-blur-xl flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Filter className="h-4 w-4 text-slate-400" />
           <select
@@ -116,7 +116,7 @@ export default function AuditLogs() {
       </div>
 
       {/* Audit Log Table */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-3xl border border-white/60 bg-white/85 shadow-xl shadow-indigo-500/5 backdrop-blur-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="border-b border-slate-100 bg-slate-50/70 text-[11px] font-bold uppercase tracking-wider text-slate-400">

@@ -6,10 +6,8 @@ import {
   Search,
   UploadCloud,
   LogOut,
-  User,
-  ShieldCheck,
-  CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  Sparkles
 } from 'lucide-react';
 
 export default function Navbar({ onOpenUpload }) {
@@ -17,19 +15,23 @@ export default function Navbar({ onOpenUpload }) {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 px-6 backdrop-blur transition-all">
-      {/* Brand logo & mobile menu */}
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-slate-200/70 bg-white/80 px-6 backdrop-blur-xl transition-all shadow-sm">
+      {/* Brand logo & 3D glowing badge */}
       <div className="flex items-center gap-3">
-        <Link to="/" className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 shadow-md shadow-indigo-500/20">
-            <FileText className="h-5 w-5 text-white" />
+        <Link to="/" className="group flex items-center gap-2.5">
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-500 shadow-md shadow-indigo-500/25 transition-all duration-300 group-hover:scale-105 group-hover:shadow-indigo-500/40">
+            <FileText className="h-5 w-5 text-white transition-transform group-hover:rotate-6" />
+            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500 border border-white"></span>
+            </span>
           </div>
           <div>
             <span className="text-xl font-bold tracking-tight text-slate-900">
-              Docu<span className="text-indigo-600">Mind</span>
+              Docu<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Mind</span>
             </span>
-            <span className="ml-2 hidden rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 sm:inline-block">
-              v1.0 OCR
+            <span className="ml-2 hidden rounded-full border border-indigo-200 bg-indigo-50/80 px-2 py-0.5 text-[11px] font-bold text-indigo-700 backdrop-blur-sm sm:inline-block">
+              3D Intelligent IDP
             </span>
           </div>
         </Link>
@@ -39,11 +41,11 @@ export default function Navbar({ onOpenUpload }) {
       <div className="hidden max-w-md flex-1 px-8 md:block">
         <div
           onClick={() => navigate('/search')}
-          className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-2 text-sm text-slate-400 transition hover:border-slate-300 hover:bg-slate-100"
+          className="group flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200/80 bg-white/70 px-3.5 py-2 text-sm text-slate-400 backdrop-blur-md transition-all hover:border-indigo-300 hover:bg-white hover:shadow-md hover:shadow-indigo-500/5"
         >
-          <Search className="h-4 w-4 text-slate-400" />
-          <span>Search documents, extracted fields, invoices, names...</span>
-          <kbd className="ml-auto rounded bg-slate-200/80 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600">
+          <Search className="h-4 w-4 text-slate-400 transition-colors group-hover:text-indigo-600" />
+          <span className="truncate">Search documents, extracted fields, invoices, names...</span>
+          <kbd className="ml-auto rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500 border border-slate-200">
             /
           </kbd>
         </div>
@@ -54,9 +56,10 @@ export default function Navbar({ onOpenUpload }) {
         {isReviewer && (
           <button
             onClick={onOpenUpload}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-indigo-600/30 transition hover:bg-indigo-700 active:scale-[0.98]"
+            className="group relative flex items-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/25 transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/35 active:scale-95"
           >
-            <UploadCloud className="h-4 w-4" />
+            <div className="animate-shine pointer-events-none absolute inset-0 w-1/2 bg-white/20" />
+            <UploadCloud className="h-4 w-4 transition-transform group-hover:-translate-y-0.5" />
             <span className="hidden sm:inline">Upload Document</span>
           </button>
         )}
@@ -65,7 +68,7 @@ export default function Navbar({ onOpenUpload }) {
           href="/api/docs/"
           target="_blank"
           rel="noreferrer"
-          className="hidden items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 sm:flex"
+          className="hidden items-center gap-1.5 rounded-xl border border-slate-200/80 bg-white/60 px-3 py-2 text-xs font-semibold text-slate-600 backdrop-blur-md transition hover:bg-white hover:text-indigo-600 sm:flex"
           title="Swagger / OpenAPI Documentation"
         >
           <span>API Docs</span>
@@ -73,9 +76,9 @@ export default function Navbar({ onOpenUpload }) {
         </a>
 
         {/* User Info & Role Pill */}
-        <div className="flex items-center gap-3 border-l border-slate-200 pl-3">
+        <div className="flex items-center gap-3 border-l border-slate-200/80 pl-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-700">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-slate-100 to-indigo-50 font-bold text-indigo-700 shadow-sm border border-slate-200/70">
               {user?.first_name ? user.first_name[0] : (user?.username?.[0]?.toUpperCase() || 'U')}
             </div>
             <div className="hidden text-left lg:block">
@@ -86,10 +89,10 @@ export default function Navbar({ onOpenUpload }) {
                 <span
                   className={`inline-block h-1.5 w-1.5 rounded-full ${
                     isAdmin
-                      ? 'bg-purple-500'
+                      ? 'bg-purple-500 ring-2 ring-purple-200'
                       : isReviewer
-                      ? 'bg-blue-500'
-                      : 'bg-emerald-500'
+                      ? 'bg-blue-500 ring-2 ring-blue-200'
+                      : 'bg-emerald-500 ring-2 ring-emerald-200'
                   }`}
                 />
                 <span className="text-[11px] font-medium text-slate-500 capitalize">
@@ -101,7 +104,7 @@ export default function Navbar({ onOpenUpload }) {
 
           <button
             onClick={logout}
-            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-xl p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600"
             title="Log out"
           >
             <LogOut className="h-4 w-4" />
@@ -111,4 +114,3 @@ export default function Navbar({ onOpenUpload }) {
     </header>
   );
 }
-

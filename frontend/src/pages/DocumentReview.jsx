@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api, { API_BASE_URL, resolveMediaUrl } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import ScannerBeam from '../components/ScannerBeam';
+import TiltCard from '../components/TiltCard';
 import {
   FileText,
   CheckCircle2,
@@ -27,7 +29,9 @@ import {
   Layers,
   FileSpreadsheet,
   Check,
-  X
+  X,
+  Eye,
+  Box
 } from 'lucide-react';
 
 const CATEGORY_OPTIONS = [
@@ -54,6 +58,7 @@ export default function DocumentReview() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [reprocessing, setReprocessing] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [is3DMode, setIs3DMode] = useState(true);
 
   // Field editing state
   const [editedFields, setEditedFields] = useState({});
@@ -324,8 +329,23 @@ export default function DocumentReview() {
               </button>
             </div>
 
-            {/* Zoom Controls */}
-            <div className="flex items-center gap-1 text-slate-500">
+            {/* 3D Perspective & Zoom Controls */}
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <button
+                onClick={() => setIs3DMode((prev) => !prev)}
+                className={`flex items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold transition-all shadow-sm ${
+                  is3DMode
+                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-indigo-300'
+                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+                title="Toggle 3D Holographic Perspective"
+              >
+                <Box className="h-3.5 w-3.5" />
+                <span>{is3DMode ? '3D Active' : '2D View'}</span>
+              </button>
+
+              <div className="h-4 w-px bg-slate-200 mx-1" />
+
               <button
                 onClick={() => setZoomLevel((z) => Math.max(0.6, z - 0.2))}
                 className="rounded p-1 hover:bg-slate-200"
@@ -333,7 +353,7 @@ export default function DocumentReview() {
               >
                 <ZoomOut className="h-4 w-4" />
               </button>
-              <span className="text-[11px] font-bold w-10 text-center">
+              <span className="text-[11px] font-bold w-10 text-center font-mono">
                 {Math.round(zoomLevel * 100)}%
               </span>
               <button
@@ -352,25 +372,49 @@ export default function DocumentReview() {
             </div>
           </div>
 
-          {/* Rendered Preview Container */}
-          <div className="relative min-h-[500px] max-h-[720px] overflow-auto bg-slate-900/5 p-4 flex items-center justify-center">
+          {/* Rendered Preview Container with 3D Perspective */}
+          <div className="relative min-h-[520px] max-h-[740px] overflow-hidden bg-gradient-to-b from-slate-900/10 via-slate-900/5 to-indigo-950/10 p-6 flex items-center justify-center perspective-1000">
             {currentPageData?.thumbnail_url || document.preview_url ? (
               <div
-                style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
-                className="transition-transform duration-150 shadow-lg rounded-lg overflow-hidden bg-white max-w-full"
+                style={{
+                  transform: is3DMode
+                    ? `scale(${zoomLevel}) perspective(1200px) rotateX(12deg) rotateY(-8deg) rotateZ(1.5deg)`
+                    : `scale(${zoomLevel})`,
+                  transformOrigin: 'top center',
+                  boxShadow: is3DMode
+                    ? '0 30px 60px -15px rgba(99, 102, 241, 0.3), 0 20px 40px -20px rgba(0, 0, 0, 0.4)'
+                    : '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
+                  transition: 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.5s ease',
+                }}
+                className="relative rounded-2xl overflow-hidden bg-white max-w-full border border-indigo-100/80 will-change-transform"
               >
+                {/* 3D Neural Laser Scanner Beam */}
+                <ScannerBeam active={true} label={`Page ${activePage} • Neural OCR`} />
+
                 <img
                   src={resolveMediaUrl(currentPageData?.thumbnail_url || document.preview_url)}
                   alt={`Page ${activePage}`}
-                  className="max-h-[680px] w-auto object-contain mx-auto"
+                  className="max-h-[680px] w-auto object-contain mx-auto select-none"
                 />
               </div>
             ) : document.file_url && document.file_type === 'pdf' ? (
-              <iframe
-                src={`${resolveMediaUrl(document.file_url)}#page=${activePage}`}
-                className="h-[650px] w-full rounded-lg border border-slate-200"
-                title="PDF Document"
-              />
+              <div
+                style={{
+                  transform: is3DMode
+                    ? `scale(${zoomLevel}) perspective(1200px) rotateX(10deg) rotateY(-6deg)`
+                    : `scale(${zoomLevel})`,
+                  transformOrigin: 'top center',
+                  transition: 'transform 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
+                }}
+                className="relative w-full h-[650px] rounded-2xl overflow-hidden shadow-2xl bg-white border border-indigo-100"
+              >
+                <ScannerBeam active={true} label={`PDF Page ${activePage} • OCR Scan`} />
+                <iframe
+                  src={`${resolveMediaUrl(document.file_url)}#page=${activePage}`}
+                  className="h-full w-full"
+                  title="PDF Document"
+                />
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                 <FileText className="h-12 w-12 stroke-[1.5] mb-2 text-slate-300" />
@@ -508,7 +552,7 @@ export default function DocumentReview() {
                     return (
                       <div
                         key={field.id}
-                        className="rounded-xl border border-slate-200 p-4 transition hover:border-slate-300 space-y-2 bg-white"
+                        className="group rounded-2xl border border-slate-200/80 bg-white/80 p-4 transition-all duration-200 hover:border-indigo-300 hover:shadow-md hover:bg-white space-y-2.5"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
