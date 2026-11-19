@@ -1,14 +1,66 @@
-# 🚀 DocuMind Production Deployment Guide
+# 🚀 DocuMind Production & Zero-Cost Deployment Guide
 
-This guide covers deployment options for the **DocuMind** platform across different environments:
-- **Option 1: Docker Compose (VPS / Cloud VM - AWS, DigitalOcean, Hetzner, GCP)** *(Recommended)*
-- **Option 2: Render (1-Click Blueprint)**
-- **Option 3: Railway**
-- **Option 4: Traditional Ubuntu / Debian Linux Server**
+DocuMind is engineered to run in production or at **100% Zero Cost ($0 / month)** without requiring a credit card:
+
+| Deployment Path | Cost | Best For | Setup Complexity |
+| :--- | :--- | :--- | :--- |
+| **Option 1: Render 100% Free Blueprint** | **$0.00** | Full Cloud Deployment (Web API + React SPA) | 1-Click via `render.yaml` |
+| **Option 2: Vercel (Frontend) + Render (API)** | **$0.00** | Blazing-fast edge frontend + Free Docker API | 2 Clicks |
+| **Option 3: Neon.tech Free PostgreSQL** | **$0.00** | Free Lifetime Cloud Postgres (No Card Needed) | 30 Seconds |
+| **Option 4: Docker Compose** | Host Cost | Self-hosted VPS (DigitalOcean / AWS / Hetzner) | Terminal command |
 
 ---
 
-## 📦 Option 1: Docker Compose (Recommended)
+## 💰 How DocuMind Runs at 100% ZERO COST ($0)
+
+Standard enterprise setups use separate Redis brokers, PostgreSQL clusters, and dedicated Celery worker containers, which cloud platforms charge for ($7-$45/month).
+
+**DocuMind includes built-in Zero-Cost optimizations**:
+1. **In-Process Task Execution**: Setting `CELERY_TASK_ALWAYS_EAGER=true` eliminates the need for a separate Celery worker container and Redis broker. OCR, PyMuPDF, document classification, and field extraction run directly inside the free Django web service!
+2. **Free Database Options**:
+   - **Built-in SQLite**: Works out of the box with $0 cost and zero external accounts.
+   - **Neon.tech Free Serverless PostgreSQL**: Provides 0.5 GB storage, serverless autoscaling, and free SSL with **zero credit card required forever**.
+3. **Optimized Gunicorn Memory**: Configured with 1 worker and 4 threads (`--workers 1 --threads 4`), keeping total memory footprint under 250MB to comfortably fit within 512MB free tier RAM limits without crashing.
+
+---
+
+## ☁️ Option 1: 1-Click 100% Free Deployment on Render ($0)
+
+DocuMind's `render.yaml` is pre-configured with `plan: free` for both services:
+
+1. Push latest code to your GitHub:
+   ```bash
+   git push origin main
+   ```
+2. Go to **[dashboard.render.com](https://dashboard.render.com/)** and log in with GitHub.
+3. Click **New +** → **Blueprint**.
+4. Select your repository: **`Yash-36-p/Documind`**.
+5. Render reads `render.yaml` and will display **$0 / month Free Tier**:
+   - `documind-api` (Docker Web Service, `plan: free`)
+   - `documind-frontend` (Static Web Service, `plan: free`)
+6. Click **Apply**.
+7. Render deploys both services for free!
+
+*(Optional: To use a free PostgreSQL database with Render, sign up at [Neon.tech](https://neon.tech), create a free project, copy the connection string, and add `DATABASE_URL` in the `documind-api` Environment variables tab in Render).*
+
+---
+
+## ⚡ Option 2: Vercel (Frontend) + Render (Backend) ($0)
+
+Deploying the React frontend on **Vercel** gives you global edge caching and 0-second deploy times:
+
+1. **Deploy Frontend on Vercel**:
+   - Go to [vercel.com](https://vercel.com/) and click **Add New Project**.
+   - Import `Yash-36-p/Documind`.
+   - Set **Root Directory** to `frontend`.
+   - Framework Preset: **Vite**.
+   - Add Environment Variable:
+     - `VITE_API_URL` = `https://<your-documind-api>.onrender.com`
+   - Click **Deploy**.
+
+---
+
+## 📦 Option 3: Docker Compose (Self-Hosted VPS)
 
 Docker Compose containerizes all 5 services with persistent volumes, automatic restarts, and isolated networking:
 - **`frontend`**: Nginx web gateway serving React Vite production bundle and reverse-proxying API requests

@@ -40,5 +40,5 @@ EXPOSE 8000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 
-# Default command: run Gunicorn with 3 workers
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120"]
+# Default command: run Gunicorn with 1 worker and 4 threads (optimized for memory efficiency on free cloud tiers)
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "1", "--threads", "4", "--timeout", "180"]
