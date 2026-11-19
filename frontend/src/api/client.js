@@ -1,6 +1,14 @@
 import axios from 'axios';
 
 export const getBackendOrigin = () => {
+  // Check if explicit backend URL is provided via environment variable (e.g. on Render / Cloud)
+  if (import.meta.env.VITE_API_URL) {
+    let url = import.meta.env.VITE_API_URL.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = `https://${url}`;
+    }
+    return url.replace(/\/api\/?$/, '').replace(/\/$/, '');
+  }
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname || '127.0.0.1';
     return `http://${hostname}:8000`;
@@ -9,6 +17,13 @@ export const getBackendOrigin = () => {
 };
 
 export const API_BASE_URL = `${getBackendOrigin()}/api`;
+
+export const resolveMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const backend = getBackendOrigin();
+  return `${backend}${url.startsWith('/') ? '' : '/'}${url}`;
+};
 
 const api = axios.create({
   baseURL: API_BASE_URL,

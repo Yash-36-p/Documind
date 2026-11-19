@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import api, { API_BASE_URL } from '../api/client';
+import api, { API_BASE_URL, resolveMediaUrl } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import {
   FileText,
@@ -276,7 +276,7 @@ export default function DocumentReview() {
           )}
 
           <a
-            href={`/api/export/csv/?doc_id=${document.id}`}
+            href={`${API_BASE_URL}/export/csv/?doc_id=${document.id}`}
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
@@ -286,7 +286,7 @@ export default function DocumentReview() {
           </a>
 
           <a
-            href={`/api/documents/${document.id}/download/`}
+            href={`${API_BASE_URL}/documents/${document.id}/download/`}
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
@@ -360,14 +360,14 @@ export default function DocumentReview() {
                 className="transition-transform duration-150 shadow-lg rounded-lg overflow-hidden bg-white max-w-full"
               >
                 <img
-                  src={currentPageData?.thumbnail_url || document.preview_url}
+                  src={resolveMediaUrl(currentPageData?.thumbnail_url || document.preview_url)}
                   alt={`Page ${activePage}`}
                   className="max-h-[680px] w-auto object-contain mx-auto"
                 />
               </div>
             ) : document.file_url && document.file_type === 'pdf' ? (
               <iframe
-                src={`${document.file_url}#page=${activePage}`}
+                src={`${resolveMediaUrl(document.file_url)}#page=${activePage}`}
                 className="h-[650px] w-full rounded-lg border border-slate-200"
                 title="PDF Document"
               />

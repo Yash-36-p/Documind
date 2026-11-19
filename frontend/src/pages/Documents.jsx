@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
-import api, { API_BASE_URL } from '../api/client';
+import api, { API_BASE_URL, resolveMediaUrl } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import {
   FileText,
@@ -251,7 +251,7 @@ export default function Documents() {
                         <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-slate-100 group-hover:border-indigo-300 transition">
                           {doc.preview_url ? (
                             <img
-                              src={doc.preview_url}
+                              src={resolveMediaUrl(doc.preview_url)}
                               alt={doc.title}
                               className="h-full w-full object-cover"
                             />

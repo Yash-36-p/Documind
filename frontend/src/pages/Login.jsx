@@ -9,7 +9,8 @@ import {
   ArrowRight,
   Shield,
   CheckCircle2,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 
 const GoogleIcon = () => (
@@ -38,6 +39,7 @@ export default function Login() {
   const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [googleModalOpen, setGoogleModalOpen] = useState(false);
   const [customGoogleEmail, setCustomGoogleEmail] = useState('');
 
@@ -76,32 +78,32 @@ export default function Login() {
     setError('');
     const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-    // If official Google Identity Services client is configured
+    // If official Google Identity Services client is configured with Client ID
     if (window.google?.accounts?.id && googleClientId) {
       window.google.accounts.id.initialize({
         client_id: googleClientId,
         callback: async (response) => {
           try {
-            setLoading(true);
+            setGoogleLoading(true);
             await loginWithGoogle({ credential: response.credential });
             navigate('/');
           } catch (err) {
             const msg = err.response?.data?.error || 'Google sign-in verification failed.';
             setError(msg);
           } finally {
-            setLoading(false);
+            setGoogleLoading(false);
           }
         },
       });
       window.google.accounts.id.prompt();
     } else {
-      // Open the Google Authentication dialog
-      setGoogleModalOpen(true);
+      // Seamless 1-Click Google Sign-In
+      executeGoogleAuth('alex.reviewer.google@gmail.com', 'Alex Rivera (Google)');
     }
   };
 
   const executeGoogleAuth = async (email, name) => {
-    setLoading(true);
+    setGoogleLoading(true);
     setGoogleModalOpen(false);
     setError('');
     try {
@@ -120,7 +122,7 @@ export default function Login() {
         'Google sign in failed. Please try again.';
       setError(detail);
     } finally {
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
@@ -155,16 +157,34 @@ export default function Login() {
           )}
 
           {/* 1. Google Sign-in Button */}
-          <div>
+          <div className="space-y-2">
             <button
               type="button"
               onClick={handleGoogleSignInClick}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-2.5 px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] disabled:opacity-50"
+              disabled={loading || googleLoading}
+              className="w-full flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-3 px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 active:scale-[0.99] disabled:opacity-50"
             >
-              <GoogleIcon />
-              <span>Sign in with Google</span>
+              {googleLoading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+                  <span>Connecting with Google...</span>
+                </>
+              ) : (
+                <>
+                  <GoogleIcon />
+                  <span>Sign in with Google</span>
+                </>
+              )}
             </button>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setGoogleModalOpen(true)}
+                className="text-[11px] font-medium text-slate-400 hover:text-indigo-600 hover:underline"
+              >
+                Choose another Google email / account
+              </button>
+            </div>
           </div>
 
           {/* Divider */}
@@ -213,7 +233,7 @@ export default function Login() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || googleLoading}
               className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-700 active:scale-[0.99] transition disabled:opacity-50"
             >
               <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
@@ -277,7 +297,7 @@ export default function Login() {
         </p>
       </div>
 
-      {/* Google Account Sign-In Modal */}
+      {/* Google Account Modal */}
       {googleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm animate-in fade-in">
           <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl space-y-5">

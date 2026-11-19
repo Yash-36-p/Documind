@@ -1,0 +1,109 @@
+services:
+  # 1. PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: documind-db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-documind}
+      POSTGRES_USER: ${DB_USER:-documind}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-documind_secure_password_2026}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-documind} -d ${DB_NAME:-documind}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis Message Broker & Cache
+  redis:
+    image: redis:7-alpine
+    container_name: documind-redis
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. Django REST API (Gunicorn)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: documind-backend
+    environment:
+      DEBUG: "False"
+      SECRET_KEY: ${SECRET_KEY:-documind-prod-secret-key-change-in-production-2026}
+      ALLOWED_HOSTS: "*"
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-documind}
+      DB_USER: ${DB_USER:-documind}
+      DB_PASSWORD: ${DB_PASSWORD:-documind_secure_password_2026}
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_TASK_ALWAYS_EAGER: "False"
+      RUN_MIGRATIONS: "true"
+      SEED_DATA: "true"
+      COLLECT_STATIC: "true"
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 4. Celery Background OCR & Processing Worker
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: documind-celery-worker
+    command: ["celery", "-A", "config", "worker", "-l", "INFO", "--concurrency=2"]
+    environment:
+      DEBUG: "False"
+      SECRET_KEY: ${SECRET_KEY:-documind-prod-secret-key-change-in-production-2026}
+      ALLOWED_HOSTS: "*"
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-documind}
+      DB_USER: ${DB_USER:-documind}
+      DB_PASSWORD: ${DB_PASSWORD:-documind_secure_password_2026}
+      DB_PORT: "5432"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      CELERY_TASK_ALWAYS_EAGER: "False"
+      RUN_MIGRATIONS: "false"
+      SEED_DATA: "false"
+    volumes:
+      - media_data:/app/media
+    depends_on:
+      backend:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 5. React Frontend & Nginx Web Gateway
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: documind-frontend
+    ports:
+      - "${PORT:-80}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_data:
+  static_data:
