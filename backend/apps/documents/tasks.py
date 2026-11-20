@@ -7,6 +7,7 @@ from apps.documents.models import Document, DocumentPage, ProcessingLog
 from apps.ocr.engine import OcrEngine
 from apps.classification.classifier import DocumentClassifier
 from apps.extraction.extractor import InformationExtractor
+from apps.documents.summarizer import DocumentSummarizer
 from apps.extraction.models import ExtractedField
 from apps.audit.utils import log_activity
 from apps.audit.models import AuditLog
@@ -167,6 +168,37 @@ def run_document_processing(document_id):
             doc.confidence = round(sum(confidences) / len(confidences), 1)
         else:
             doc.confidence = doc.ocr_confidence
+
+        # Stage 4: AI Document Summarisation
+        try:
+            ProcessingLog.objects.create(
+                document=doc,
+                log_level=ProcessingLog.Level.INFO,
+                stage='SUMMARISATION',
+                message='Generating AI document summary from extracted fields and OCR text.'
+            )
+            summary_result = DocumentSummarizer.summarize(
+                document_type=doc.document_type,
+                raw_text=doc.raw_text,
+                extracted_fields=extracted_fields,
+            )
+            doc.summary = summary_result.get('summary', '')
+            # Persist key_points and word_count in metadata
+            if not isinstance(doc.metadata, dict):
+                doc.metadata = {}
+            doc.metadata['key_points'] = summary_result.get('key_points', [])
+            doc.metadata['word_count'] = summary_result.get('word_count', 0)
+
+            ProcessingLog.objects.create(
+                document=doc,
+                log_level=ProcessingLog.Level.INFO,
+                stage='SUMMARISATION',
+                message=f"Summary generated ({len(doc.summary)} chars). "
+                        f"{len(doc.metadata['key_points'])} key points extracted."
+            )
+        except Exception as sum_err:
+            logger.warning(f"Summarisation failed for #{doc.id}: {sum_err}")
+            doc.summary = ''
 
         doc.status = Document.Status.COMPLETED
         doc.save()

@@ -53,6 +53,7 @@ class Document(models.Model):
     classification_explanation = models.JSONField(default=dict, blank=True)
 
     raw_text = models.TextField(blank=True, default='')
+    summary = models.TextField(blank=True, default='', help_text="AI-generated document summary")
     file_type = models.CharField(max_length=30, default='pdf')
     mime_type = models.CharField(max_length=100, default='application/pdf')
     file_size = models.BigIntegerField(default=0)

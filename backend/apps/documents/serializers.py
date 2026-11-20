@@ -36,6 +36,7 @@ class DocumentListSerializer(serializers.ModelSerializer):
     # Compatibility aliases
     category = serializers.CharField(source='document_type', read_only=True)
     created_at = serializers.DateTimeField(source='uploaded_at', read_only=True)
+    summary_preview = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -45,8 +46,15 @@ class DocumentListSerializer(serializers.ModelSerializer):
             'confidence', 'ocr_confidence', 'classification_confidence',
             'uploaded_by', 'uploaded_by_name', 'uploaded_at', 'created_at',
             'page_count', 'file_size', 'file_type', 'is_verified',
-            'preview_url', 'fields_count', 'updated_at'
+            'preview_url', 'fields_count', 'updated_at',
+            'summary_preview',
         ]
+
+    def get_summary_preview(self, obj):
+        """Return first 150 chars of summary for the list view."""
+        if obj.summary:
+            return obj.summary[:150] + ('…' if len(obj.summary) > 150 else '')
+        return ''
 
     def get_uploaded_by_name(self, obj):
         if obj.uploaded_by:
@@ -77,6 +85,7 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
     # Compatibility aliases
     category = serializers.CharField(source='document_type', read_only=True)
     created_at = serializers.DateTimeField(source='uploaded_at', read_only=True)
+    key_points = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -89,9 +98,13 @@ class DocumentDetailSerializer(serializers.ModelSerializer):
             'is_verified', 'verified_by_name', 'verified_at',
             'uploaded_by', 'uploaded_by_name', 'uploaded_at', 'created_at',
             'preview_url', 'file_url', 'processing_time_ms', 'metadata',
+            'summary', 'key_points',
             'pages', 'extracted_fields', 'fields', 'processing_logs',
             'correction_logs', 'updated_at'
         ]
+
+    def get_key_points(self, obj):
+        return obj.metadata.get('key_points', []) if obj.metadata else []
 
     def get_uploaded_by_name(self, obj):
         if obj.uploaded_by:

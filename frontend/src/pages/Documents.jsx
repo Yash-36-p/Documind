@@ -266,6 +266,11 @@ export default function Documents() {
                           <div className="text-xs text-slate-400">
                             {doc.filename} • {formatSize(doc.file_size)} • {doc.page_count} {doc.page_count === 1 ? 'page' : 'pages'}
                           </div>
+                          {doc.summary_preview && (
+                            <p className="mt-1 text-xs text-slate-500 italic line-clamp-2 max-w-xs">
+                              {doc.summary_preview}
+                            </p>
+                          )}
                         </div>
                       </Link>
                     </td>

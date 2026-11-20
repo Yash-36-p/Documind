@@ -31,7 +31,11 @@ import {
   Check,
   X,
   Eye,
-  Box
+  Box,
+  BookOpen,
+  ListChecks,
+  Zap,
+  BarChart2,
 } from 'lucide-react';
 
 const CATEGORY_OPTIONS = [
@@ -53,7 +57,7 @@ export default function DocumentReview() {
 
   const [document, setDocument] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('fields'); // 'fields', 'history', 'raw_text'
+  const [activeTab, setActiveTab] = useState('fields'); // 'fields', 'history', 'raw_text', 'summary'
   const [activePage, setActivePage] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [reprocessing, setReprocessing] = useState(false);
@@ -64,6 +68,10 @@ export default function DocumentReview() {
   const [editedFields, setEditedFields] = useState({});
   const [savingFieldId, setSavingFieldId] = useState(null);
   const [copyFeedback, setCopyFeedback] = useState(false);
+
+  // Summarization state
+  const [regenerating, setRegenerating] = useState(false);
+  const [copySummaryFeedback, setCopySummaryFeedback] = useState(false);
 
   // Add Custom Field modal
   const [showAddField, setShowAddField] = useState(false);
@@ -191,6 +199,26 @@ export default function DocumentReview() {
     navigator.clipboard.writeText(document.raw_text);
     setCopyFeedback(true);
     setTimeout(() => setCopyFeedback(false), 2000);
+  };
+
+  const handleRegenerateSummary = async () => {
+    setRegenerating(true);
+    try {
+      await api.post(`/documents/${id}/reprocess/`);
+      await fetchDocument();
+      setActiveTab('summary');
+    } catch (err) {
+      console.error('Summary regeneration failed:', err);
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  const handleCopySummary = () => {
+    if (!document?.summary) return;
+    navigator.clipboard.writeText(document.summary);
+    setCopySummaryFeedback(true);
+    setTimeout(() => setCopySummaryFeedback(false), 2000);
   };
 
   const getConfidenceColor = (conf) => {
@@ -528,6 +556,20 @@ export default function DocumentReview() {
                 >
                   Raw OCR Text
                 </button>
+                <button
+                  onClick={() => setActiveTab('summary')}
+                  className={`pb-3 text-sm font-bold transition border-b-2 flex items-center gap-1.5 ${
+                    activeTab === 'summary'
+                      ? 'border-violet-600 text-violet-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  AI Summary
+                  {document.summary && (
+                    <span className="ml-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-700">✦</span>
+                  )}
+                </button>
               </div>
 
               {activeTab === 'fields' && isReviewer && (
@@ -718,6 +760,122 @@ export default function DocumentReview() {
                 <pre className="max-h-[500px] overflow-auto rounded-xl bg-slate-900 p-4 text-xs font-mono text-slate-200 leading-relaxed whitespace-pre-wrap selection:bg-indigo-500">
                   {document.raw_text || 'No text extracted.'}
                 </pre>
+              </div>
+            )}
+
+            {/* TAB 4: AI SUMMARY */}
+            {activeTab === 'summary' && (
+              <div className="p-6 space-y-5">
+                {/* Summary header actions */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-sm shadow-violet-300">
+                      <Sparkles className="h-4 w-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">AI-Generated Document Summary</h3>
+                      <p className="text-[11px] text-slate-400">
+                        {document.metadata?.word_count
+                          ? `${document.metadata.word_count} words processed`
+                          : 'Rule-based NLP — No external API required'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopySummary}
+                      disabled={!document.summary}
+                      className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                    >
+                      {copySummaryFeedback ? (
+                        <><Check className="h-3.5 w-3.5 text-emerald-600" /><span>Copied!</span></>
+                      ) : (
+                        <><Copy className="h-3.5 w-3.5 text-slate-500" /><span>Copy</span></>
+                      )}
+                    </button>
+                    {isReviewer && (
+                      <button
+                        onClick={handleRegenerateSummary}
+                        disabled={regenerating}
+                        className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm shadow-violet-300 hover:from-violet-700 hover:to-indigo-700 transition disabled:opacity-50"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? 'animate-spin' : ''}`} />
+                        <span>{regenerating ? 'Regenerating…' : 'Regenerate'}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {document.summary ? (
+                  <>
+                    {/* Main Summary Card */}
+                    <div className="relative overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/60 via-indigo-50/40 to-white p-5 shadow-sm">
+                      {/* Decorative orb */}
+                      <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br from-violet-200/40 to-indigo-200/40 blur-2xl" />
+                      <p className="relative text-sm leading-relaxed text-slate-700 font-medium">
+                        {document.summary}
+                      </p>
+                    </div>
+
+                    {/* Key Points */}
+                    {document.key_points && document.key_points.length > 0 && (
+                      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3">
+                        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 pb-2 border-b border-slate-100">
+                          <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+                          Key Extracted Points
+                        </div>
+                        <ul className="space-y-2.5">
+                          {document.key_points.map((point, idx) => (
+                            <li key={idx} className="flex items-start gap-3 text-sm text-slate-700">
+                              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-[10px] font-bold text-white shadow-sm">
+                                {idx + 1}
+                              </span>
+                              <span>{point}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Stats row */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
+                        <div className="text-lg font-extrabold text-indigo-600">{document.summary.split(' ').length}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Summary Words</div>
+                      </div>
+                      <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
+                        <div className="text-lg font-extrabold text-violet-600">{document.key_points?.length || 0}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Key Points</div>
+                      </div>
+                      <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-center">
+                        <div className="text-lg font-extrabold text-emerald-600">{document.metadata?.word_count || document.raw_text?.split(' ').length || 0}</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">Source Words</div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-2xl border-2 border-dashed border-slate-200 py-14 text-center space-y-3">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50">
+                      <Sparkles className="h-6 w-6 text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-600">No summary yet</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        Upload a document or reprocess to generate an AI summary automatically.
+                      </p>
+                    </div>
+                    {isReviewer && (
+                      <button
+                        onClick={handleRegenerateSummary}
+                        disabled={regenerating}
+                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-violet-300 hover:from-violet-700 hover:to-indigo-700 transition"
+                      >
+                        <Sparkles className="h-4 w-4" />
+                        Generate Summary Now
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
